@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOEIC 英文聽讀特訓大師</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* 動畫效果 */
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .pulse-btn { animation: pulse-subtle 2s infinite; }
+        /* 波形動畫 */
+        .wave-bar {
+            width: 4px;
+            background-color: #3b82f6;
+            animation: wave 1.2s infinite ease-in-out;
+        }
+        @keyframes wave {
+            0%, 40%, 100% { transform: scaleY(0.4); }
+            20% { transform: scaleY(1); }
+        }
+        .wave-bar:nth-child(2) { animation-delay: -1.1s; }
+        .wave-bar:nth-child(3) { animation-delay: -1.0s; }
+        .wave-bar:nth-child(4) { animation-delay: -0.9s; }
+        .wave-bar:nth-child(5) { animation-delay: -0.8s; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-2 md:mb-0">
+                <div class="bg-white text-indigo-600 p-2 rounded-xl shadow-inner font-bold text-xl">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">TOEIC 聽讀單字特訓大師</h1>
+                    <p class="text-xs text-indigo-200">精選 200 多益高頻詞彙 • 聽力與口說雙效強化</p>
+                </div>
+            </div>
+            <!-- 導覽頁籤按鈕 -->
+            <nav class="flex flex-wrap gap-1 md:gap-2 justify-center bg-indigo-700/50 p-1.5 rounded-2xl">
+                <button onclick="switchTab('dictionary')" id="btn-dictionary" class="tab-btn px-3 py-1.5 rounded-xl text-sm font-medium transition bg-white text-indigo-600 shadow">
+                    <i class="fa-solid fa-book-open mr-1"></i> 單字字典
+                </button>
+                <button onclick="switchTab('listening')" id="btn-listening" class="tab-btn px-3 py-1.5 rounded-xl text-sm font-medium transition text-indigo-100 hover:bg-indigo-600">
+                    <i class="fa-solid fa-headphones mr-1"></i> 聽力測驗
+                </button>
+                <button onclick="switchTab('speaking')" id="btn-speaking" class="tab-btn px-3 py-1.5 rounded-xl text-sm font-medium transition text-indigo-100 hover:bg-indigo-600">
+                    <i class="fa-solid fa-microphone mr-1"></i> 口說辨識
+                </button>
+                <button onclick="switchTab('mistakes')" id="btn-mistakes" class="tab-btn px-3 py-1.5 rounded-xl text-sm font-medium transition text-indigo-100 hover:bg-indigo-600">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> 錯題溫習 (<span id="mistake-badge">0</span>)
+                </button>
+                <button onclick="switchTab('stats')" id="btn-stats" class="tab-btn px-3 py-1.5 rounded-xl text-sm font-medium transition text-indigo-100 hover:bg-indigo-600">
+                    <i class="fa-solid fa-chart-pie mr-1"></i> 學習統計
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+
+        <!-- 1. 單字字典頁籤 -->
+        <section id="tab-dictionary" class="tab-content active space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="w-full md:w-1/3 relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-search"></i>
+                    </span>
+                    <input type="text" id="search-input" oninput="filterDictionary()" placeholder="搜尋英文單字或中文..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+                <div class="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                    <select id="category-filter" onchange="filterDictionary()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="all">全部分類 (200字)</option>
+                        <option value="辦公室商務">辦公室商務 (Office & Admin)</option>
+                        <option value="人事招聘">人事招聘 (HR & Hiring)</option>
+                        <option value="財務會計">財務會計 (Finance & Accounting)</option>
+                        <option value="合約協商">合約協商 (Contracts & Negotiation)</option>
+                        <option value="客戶服務">客戶服務 (Customer Service)</option>
+                        <option value="生產製造">生產製造 (Manufacturing & Logistics)</option>
+                        <option value="行銷業務">行銷業務 (Marketing & Sales)</option>
+                    </select>
+                    <select id="status-filter" onchange="filterDictionary()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="all">所有狀態</option>
+                        <option value="favorite">我的最愛</option>
+                        <option value="mastered">已掌握</option>
+                        <option value="learning">學習中</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 單字卡片清單網格 -->
+            <div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- 動態產生 -->
+            </div>
+        </section>
+
+        <!-- 2. 聽力測驗頁籤 -->
+        <section id="tab-listening" class="tab-content space-y-6">
+            <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center relative overflow-hidden">
+                <div class="absolute top-4 right-4 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-semibold">
+                    題號：<span id="l-current-q">1</span> / <span id="l-total-q">10</span>
+                </div>
+                
+                <h2 class="text-xl font-bold text-slate-800 mb-2">聽音辨義測驗</h2>
+                <p class="text-slate-500 text-sm mb-8">點擊播放發音，選出正確的中文解釋與詞性</p>
+
+                <!-- 語音控制大按鈕 -->
+                <div class="my-8">
+                    <button onclick="playCurrentListeningAudio()" class="w-24 h-24 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-full mx-auto flex items-center justify-center text-3xl shadow-lg shadow-indigo-200 transition pulse-btn">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <p class="text-xs text-indigo-600 font-medium mt-3">點擊聆聽發音</p>
+                </div>
+
+                <!-- 選擇題選項 -->
+                <div id="l-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+                    <!-- 動態產生選項 -->
+                </div>
+
+                <!-- 答題後顯示解析與下一題 -->
+                <div id="l-feedback-container" class="mt-6 hidden text-left p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <div id="l-feedback-text" class="font-bold text-base mb-1"></div>
+                    <div id="l-feedback-example" class="text-xs text-slate-600 italic"></div>
+                    <button onclick="nextListeningQuestion()" class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-medium w-full transition shadow">
+                        下一題 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 口說辨識測驗頁籤 -->
+        <section id="tab-speaking" class="tab-content space-y-6">
+            <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center relative">
+                <div class="absolute top-4 right-4 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-semibold">
+                    題號：<span id="s-current-q">1</span> / <span id="s-total-q">10</span>
+                </div>
+
+                <h2 class="text-xl font-bold text-slate-800 mb-2">口說語音辨識特訓</h2>
+                <p class="text-slate-500 text-sm mb-6">看中文提示與首字母，對麥克風唸出正確的英文單字</p>
+
+                <!-- 題目提示卡 -->
+                <div class="bg-indigo-50/60 p-6 rounded-2xl border border-indigo-100 mb-8">
+                    <span id="s-category-tag" class="inline-block bg-indigo-200 text-indigo-800 text-xs px-2.5 py-1 rounded-lg font-medium mb-2">分類</span>
+                    <div id="s-chinese-prompt" class="text-2xl font-bold text-slate-800 mb-2">請準備載入...</div>
+                    <div class="text-sm text-indigo-600 font-semibold tracking-wider">首字母提示：<span id="s-hint-letter" class="text-lg underline">--</span></div>
+                </div>
+
+                <!-- 錄音控制區 -->
+                <div class="flex flex-col items-center justify-center space-y-4">
+                    <button id="mic-btn" onclick="toggleSpeechRecognition()" class="w-20 h-20 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-rose-200 transition">
+                        <i id="mic-icon" class="fa-solid fa-microphone"></i>
+                    </button>
+                    <div id="listening-wave" class="hidden flex items-center space-x-1 h-6">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    <p id="speech-status-text" class="text-sm font-medium text-slate-600">點擊麥克風開始說出英文單字</p>
+                </div>
+
+                <!-- 辨識結果與回饋 -->
+                <div id="s-result-box" class="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-left hidden">
+                    <div class="text-xs text-slate-400">您的語音辨識結果：</div>
+                    <div id="s-recognized-text" class="text-lg font-bold text-slate-800 my-1">--</div>
+                    <div id="s-feedback-msg" class="text-sm font-medium"></div>
+                    <button onclick="nextSpeakingQuestion()" class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-medium w-full transition shadow">
+                        下一題 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 錯題溫習頁籤 -->
+        <section id="tab-mistakes" class="tab-content space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">錯題本與重點複習</h2>
+                    <p class="text-slate-500 text-sm">此處記錄您在練習中答錯或需要加強的單字，點擊可重新複習</p>
+                </div>
+                <button onclick="clearMistakes()" class="bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 px-4 py-2 rounded-xl text-sm font-medium transition">
+                    <i class="fa-solid fa-trash-can mr-1"></i> 清空錯題本
+                </button>
+            </div>
+            <div id="mistakes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- 動態產生 -->
+            </div>
+        </section>
+
+        <!-- 5. 學習統計頁籤 -->
+        <section id="tab-stats" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs">單字庫總數</div>
+                        <div id="stat-total-words" class="text-2xl font-bold text-slate-800">200</div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs">已掌握單字</div>
+                        <div id="stat-mastered" class="text-2xl font-bold text-slate-800">0</div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs">累計測驗次數</div>
+                        <div id="stat-quiz-count" class="text-2xl font-bold text-slate-800">0</div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs">平均正確率</div>
+                        <div id="stat-accuracy" class="text-2xl font-bold text-slate-800">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 詳細統計與資料重設 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h3 class="text-lg font-bold text-slate-800">學習資料管理</h3>
+                <p class="text-sm text-slate-500">系統會自動將您的最愛標記、學習狀態與測驗紀錄儲存在瀏覽器的 LocalStorage 中。</p>
+                <div class="flex gap-3">
+                    <button onclick="resetAllData()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-sm font-medium transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 重設所有學習進度
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 mt-auto">
+        <p>TOEIC 英文聽讀特訓大師 • 支援 Web Speech API 語音合成與語音辨識</p>
+    </footer>
+
+    <!-- JavaScript 邏輯區 -->
+    <script>
+        // ==========================================
+        // 1. 200字多益核心單字與片語資料庫
+        // ==========================================
+        const rawVocabData = [
+            // 辦公室商務 (Office & Admin)
+            { id: 1, word: "acquire", pos: "v.", meaning: "取得、獲得、購併", category: "辦公室商務", example: "The company plans to acquire a smaller competitor next month." },
+            { id: 2, word: "agenda", pos: "n.", meaning: "議程、待辦事項", category: "辦公室商務", example: "Please review the meeting agenda before Friday." },
+            { id: 3, word: "allocate", pos: "v.", meaning: "分配、分派（預算、資源）", category: "辦公室商務", example: "Management will allocate more funds to the marketing team." },
+            { id: 4, word: "collaborate", pos: "v.", meaning: "合作、協力", category: "辦公室商務", example: "Our design team will collaborate with the engineering department." },
+            { id: 5, word: "compensation", pos: "n.", meaning: "補償金、報酬、薪資福利", category: "辦公室商務", example: "Employees receive competitive compensation and benefits." },
+            { id: 6, word: "congested", pos: "adj.", meaning: "擁擠的、塞車的", category: "辦公室商務", example: "Traffic in downtown is very congested during rush hours." },
+            { id: 7, word: "corridor", pos: "n.", meaning: "走廊、通道", category: "辦公室商務", example: "Meeting room B is located down the corridor on your right." },
+            { id: 8, word: "delegate", pos: "v./n.", meaning: "委派、授權；代表", category: "辦公室商務", example: "Managers should learn how to delegate tasks effectively." },
+            { id: 9, word: "efficiency", pos: "n.", meaning: "效率、效能", category: "辦公室商務", example: "New software was installed to improve office productivity and efficiency." },
+            { id: 10, word: "equip", pos: "v.", meaning: "配備、裝備", category: "辦公室商務", example: "All conference rooms are fully equipped with audio-visual gear." },
+            { id: 11, word: "headquarters", pos: "n.", meaning: "總公司、總部", category: "辦公室商務", example: "The multinational corporation moved its headquarters to New York." },
+            { id: 12, word: "implement", pos: "v.", meaning: "實施、執行（政策或計畫）", category: "辦公室商務", example: "We will implement the new safety regulations starting next week." },
+            { id: 13, word: "incentive", pos: "n.", meaning: "獎勵、誘因", category: "辦公室商務", example: "Sales bonuses serve as a strong incentive for staff." },
+            { id: 14, word: "mandatory", pos: "adj.", meaning: "強制性的、義務的", category: "辦公室商務", example: "Attendance at the annual security seminar is mandatory." },
+            { id: 15, word: "merge", pos: "v.", meaning: "合併、融合", category: "辦公室商務", example: "The two local banks decided to merge last December." },
+            { id: 16, word: "negotiate", pos: "v.", meaning: "談判、協商", category: "辦公室商務", example: "Lawyers are still negotiating the terms of the contract." },
+            { id: 17, word: "17", word: "overview", pos: "n.", meaning: "概要、綜覽", category: "辦公室商務", example: "The CEO gave a brief overview of the quarterly results." },
+            { id: 18, word: "postpone", pos: "v.", meaning: "延期、延後", category: "辦公室商務", example: "The board meeting was postponed due to bad weather." },
+            { id: 19, word: "propose", pos: "v.", meaning: "提議、建議", category: "辦公室商務", example: "Mr. Smith proposed a new strategy to reduce operational costs." },
+            { id: 20, word: "quarterly", pos: "adj./adv.", meaning: "每季的、一季一次地", category: "辦公室商務", example: "We hold a quarterly review meeting with all department heads." },
+            { id: 21, word: "reception", pos: "n.", meaning: "接待處、歡迎會、接收訊號", category: "辦公室商務", example: "Please check in at the reception desk upon arrival." },
+            { id: 22, word: "relevant", pos: "adj.", meaning: "相關的、切題的", category: "辦公室商務", example: "Please attach all relevant documents to your application." },
+            { id: 23, word: "schedule", pos: "n./v.", meaning: "行程表、時間表；預定", category: "辦公室商務", example: "My schedule is completely booked for tomorrow morning." },
+            { id: 24, word: "strategy", pos: "n.", meaning: "策略、戰略", category: "辦公室商務", example: "Our marketing strategy successfully doubled online sales." },
+            { id: 25, word: "supervisor", pos: "n.", meaning: "主管、監督者", category: "辦公室商務", example: "If you have any questions, please consult your direct supervisor." },
+            { id: 26, word: "transcribe", pos: "v.", meaning: "抄寫、聽打記錄", category: "辦公室商務", example: "The secretary had to transcribe the audio recording of the meeting." },
+            { id: 27, word: "vacancy", pos: "n.", meaning: "職缺、空房", category: "辦公室商務", example: "There is currently a vacancy for a senior accountant." },
+            { id: 28, word: "versatile", pos: "adj.", meaning: "多才多藝的、多用途的", category: "辦公室商務", example: "She is a versatile employee who can handle multiple tasks." },
+            { id: 29, word: "withdraw", pos: "v.", meaning: "提款、撤回、退出", category: "辦公室商務", example: "He decided to withdraw his proposal from the committee." },
+            { id: 30, word: "workplace", pos: "n.", meaning: "工作場所", category: "辦公室商務", example: "Creating a positive workplace environment is essential." },
+
+            // 人事招聘 (HR & Hiring)
+            { id: 31, word: "applicant", pos: "n.", meaning: "申請人、應徵者", category: "人事招聘", example: "Over fifty applicants applied for the project manager position." },
+            { id: 32, word: "apprentice", pos: "n.", meaning: "學徒、見習生", category: "人事招聘", example: "He started as an apprentice before becoming a master technician." },
+            { id: 33, word: "candidate", pos: "n.", meaning: "候選人、應徵者", category: "人事招聘", example: "We interviewed three strong candidates for the role." },
+            { id: 34, word: "certificate", pos: "n.", meaning: "證書、證明", category: "人事招聘", example: "She earned a certificate in project management." },
+            { id: 35, word: "curriculum vitae", pos: "n.", meaning: "履歷表 (CV)", category: "人事招聘", example: "Please send your resume and curriculum vitae via email." },
+            { id: 36, word: "dedication", pos: "n.", meaning: "奉獻、投入", category: "人事招聘", example: "We appreciate your hard work and dedication to the company." },
+            { id: 37, word: "demote", pos: "v.", meaning: "降職、降級", category: "人事招聘", example: "He was demoted due to repeated policy violations." },
+            { id: 38, word: "dismiss", pos: "v.", meaning: "解雇、開除、駁回", category: "人事招聘", example: "The company had to dismiss several employees during downsizing." },
+            { id: 39, word: "eligibility", pos: "n.", meaning: "合格資格、適格性", category: "人事招聘", example: "Check your eligibility for the employee pension scheme." },
+            { id: 40, word: "employable", pos: "adj.", meaning: "具備就業能力的", category: "人事招聘", example: "Learning digital skills makes graduates much more employable." },
+            { id: 41, word: "evaluation", pos: "n.", meaning: "評估、考核", category: "人事招聘", example: "Annual performance evaluations take place every December." },
+            { id: 42, word: "experience", pos: "n./v.", meaning: "經驗、經歷；體驗", category: "人事招聘", example: "Looking for candidates with at least 3 years of marketing experience." },
+            { id: 43, word: "expertise", pos: "n.", meaning: "專門技術、專業知識", category: "人事招聘", example: "Her expertise in software engineering is invaluable to our team." },
+            { id: 44, word: "freelance", pos: "adj./adv.", meaning: "自由業的、獨立承攬的", category: "人事招聘", example: "Many graphic designers prefer working as freelancers." },
+            { id: 45, word: "interviewer", pos: "n.", meaning: "面試官", category: "人事招聘", example: "The interviewer asked about my previous work achievements." },
+            { id: 46, word: "layoff", pos: "n.", meaning: "解雇、裁員", category: "人事招聘", example: "The economic downturn resulted in massive layoffs." },
+            { id: 47, word: "orientation", pos: "n.", meaning: "新生訓練、員工迎新說明會", category: "人事招聘", example: "New employee orientation is scheduled for Monday morning." },
+            { id: 48, word: "payroll", pos: "n.", meaning: "薪資名冊、發薪總額", category: "人事招聘", example: "All full-time staff members are included in the monthly payroll." },
+            { id: 49, word: "promotion", pos: "n.", meaning: "升遷、促銷、宣傳", category: "人事招聘", example: "She received a well-deserved promotion to senior director." },
+            { id: 50, word: "qualification", pos: "n.", meaning: "資格、條件", category: "人事招聘", example: "A degree in finance is a basic qualification for this role." },
+            { id: 51, word: "recruit", pos: "v./n.", meaning: "招募、招聘；新兵/新進人員", category: "人事招聘", example: "The HR department is working hard to recruit talented engineers." },
+            { id: 52, word: "resignation", pos: "n.", meaning: "辭職、辭呈", category: "人事招聘", example: "He submitted his resignation letter to the director yesterday." },
+            { id: 53, word: "resume", pos: "n.", meaning: "履歷表", category: "人事招聘", example: "Please ensure your resume highlights your leadership skills." },
+            { id: 54, word: "retire", pos: "v.", meaning: "退休", category: "人事招聘", example: "Mr. Brown plans to retire after working here for 30 years." },
+            { id: 55, word: "salary", pos: "n.", meaning: "薪水、薪資", category: "人事招聘", example: "The position offers a competitive starting salary and bonuses." },
+            { id: 56, word: "stipend", pos: "n.", meaning: "津貼、補助金", category: "人事招聘", example: "Interns receive a monthly housing stipend." },
+            { id: 57, word: "subordinate", pos: "n./adj.", meaning: "部屬、下屬；次要的", category: "人事招聘", example: "Good leaders know how to support and guide their subordinates." },
+            { id: 58, word: "turnover", pos: "n.", meaning: "人員流動率、營業額", category: "人事招聘", example: "High employee turnover can be costly for a business." },
+            { id: 59, word: "underqualified", pos: "adj.", meaning: "資格不符的、學經歷不足的", category: "人事招聘", example: "His application was rejected because he was underqualified." },
+            { id: 60, word: "vacancy", pos: "n.", meaning: "職缺", category: "人事招聘", example: "We posted job advertisements for several open vacancies." },
+
+            // 財務會計 (Finance & Accounting)
+            { id: 61, word: "audit", pos: "n./v.", meaning: "審計、查帳", category: "財務會計", example: "Independent accountants will audit our financial records." },
+            { id: 62, word: "balance", pos: "n./v.", meaning: "結餘、平衡", category: "財務會計", example: "Please check your bank account balance online." },
+            { id: 63, word: "bankrupt", pos: "adj./v.", meaning: "破產的", category: "財務會計", example: "The retail chain went bankrupt after years of declining sales." },
+            { id: 64, word: "budget", pos: "n./v.", meaning: "預算", category: "財務會計", example: "We must stay within our advertising budget this quarter." },
+            { id: 65, word: "cash flow", pos: "n.", meaning: "現金流量", category: "財務會計", example: "Positive cash flow is vital for small business survival." },
+            { id: 66, word: "commission", pos: "n.", meaning: "佣金、回扣、委員會", category: "財務會計", example: "Real estate agents earn a commission on every property sold." },
+            { id: 67, word: "deduct", pos: "v.", meaning: "扣除、減除", category: "財務會計", example: "Taxes will be deducted directly from your monthly paycheck." },
+            { id: 68, word: "deficit", pos: "n.", meaning: "赤字、虧損", category: "財務會計", example: "The company reported a financial deficit at the end of the year." },
+            { id: 69, word: "dividend", pos: "n.", meaning: "股利、紅利", category: "財務會計", example: "Shareholders will receive quarterly dividend payments." },
+            { id: 70, word: "expenditure", pos: "n.", meaning: "支出、開支", category: "財務會計", example: "We need to cut unnecessary capital expenditure." },
+            { id: 71, word: "fiscal", pos: "adj.", meaning: "會計年度的、財政的", category: "財務會計", example: "Our fiscal year begins on April 1st and ends on March 31st." },
+            { id: 72, word: "forecast", pos: "n./v.", meaning: "預測、預報", category: "財務會計", example: "Economic forecasts predict a steady growth in retail sales." },
+            { id: 73, word: "gross", pos: "adj.", meaning: "總額的、毛利的", category: "財務會計", example: "Gross profit increased by 15% compared to last year." },
+            { id: 74, word: "incur", pos: "v.", meaning: "招致、蒙受（損失、債務）", category: "財務會計", example: "Clients will incur extra fees for late payment." },
+            { id: 75, word: "installment", pos: "n.", meaning: "分期付款", category: "財務會計", example: "You can pay for the equipment in three monthly installments." },
+            { id: 76, word: "invoice", pos: "n./v.", meaning: "發票、請款單", category: "財務會計", example: "Please send the invoice to our accounting department." },
+            { id: 77, word: "ledger", pos: "n.", meaning: "分類帳、總帳", category: "財務會計", example: "The accountant entered all transactions into the ledger." },
+            { id: 78, word: "liability", pos: "n.", meaning: "負債、責任", category: "財務會計", example: "The business has total liabilities exceeding one million dollars." },
+            { id: 79, word: "monetary", pos: "adj.", meaning: "貨幣的、金融的", category: "財務會計", example: "The central bank implemented new monetary policies." },
+            { id: 80, word: "mortgage", pos: "n./v.", meaning: "抵押貸款、房貸", category: "財務會計", example: "They took out a 30-year mortgage to buy their new house." },
+            { id: 81, word: "net", pos: "adj./v.", meaning: "淨利的、淨重", category: "財務會計", example: "Net income reached record highs this quarter." },
+            { id: 82, word: "overhead", pos: "n./adj.", meaning: "經常性開支、營運overhead", category: "財務會計", example: "Moving to a smaller office helped reduce our overhead costs." },
+            { id: 83, word: "portfolio", pos: "n.", meaning: "投資組合、作品集", category: "財務會計", example: "A diversified investment portfolio reduces financial risk." },
+            { id: 84, word: "reimburse", pos: "v.", meaning: "核銷、報銷、償還", category: "財務會計", example: "The company will reimburse your travel and dining expenses." },
+            { id: 85, word: "revenue", pos: "n.", meaning: "收益、營收", category: "財務會計", example: "Online advertising generates most of our revenue." },
+            { id: 86, word: "subsidy", pos: "n.", meaning: "津貼、補助金", category: "財務會計", example: "The government provides a subsidy for renewable energy projects." },
+            { id: 87, word: "transaction", pos: "n.", meaning: "交易、業務", category: "財務會計", example: "All online transactions are encrypted for security." },
+            { id: 88, word: "treasury", pos: "n.", meaning: "國庫、財政部、金庫", category: "財務會計", example: "The corporate treasury manages cash reserves and investments." },
+            { id: 89, word: "valuation", pos: "n.", meaning: "估價、估值", category: "財務會計", example: "An independent expert provided a property valuation." },
+            { id: 90, word: "yield", pos: "v./n.", meaning: "產出、投資收益率", category: "財務會計", example: "These bonds offer a high annual yield." },
+
+            // 合約與協商 (Contracts & Negotiation)
+            { id: 91, word: "agreement", pos: "n.", meaning: "協議、同意", category: "合約協商", example: "Both parties signed a binding agreement." },
+            { id: 92, word: "arbitration", pos: "n.", meaning: "仲裁", category: "合約協商", example: "The dispute was resolved through legal arbitration." },
+            { id: 93, word: "breach", pos: "n./v.", meaning: "違反、違約", category: "合約協商", example: "Failing to deliver goods on time is a breach of contract." },
+            { id: 94, word: "clause", pos: "n.", meaning: "條款 (合約中)", category: "合約協商", example: "Read the confidentiality clause carefully before signing." },
+            { id: 95, word: "commitment", pos: "n.", meaning: "承諾、交辦事項", category: "合約協商", example: "We appreciate your long-term commitment to quality." },
+            { id: 96, word: "compliance", pos: "n.", meaning: "遵守、合規", category: "合約協商", example: "Strict compliance with safety standards is required." },
+            { id: 97, word: "compromise", pos: "n./v.", meaning: "妥協、折衷方案", category: "合約協商", example: "After hours of discussion, they reached a fair compromise." },
+            { id: 98, word: "condition", pos: "n.", meaning: "條件、狀況", category: "合約協商", example: "Payment terms are one of the key conditions in the contract." },
+            { id: 99, word: "confidential", pos: "adj.", meaning: "機密的、保密的", category: "合約協商", example: "All customer data must be kept strictly confidential." },
+            { id: 100, word: "consent", pos: "n./v.", meaning: "同意、允許", category: "合約協商", example: "Written consent from the landlord is required for subleasing." },
+            { id: 101, word: "counterpart", pos: "n.", meaning: "相對應的人或物、對口", category: "合約協商", example: "I will discuss the proposal with my overseas counterpart." },
+            { id: 102, word: "expire", pos: "v.", meaning: "期滿、失效", category: "合約協商", example: "Your software subscription will expire at midnight." },
+            { id: 103, word: "guarantee", pos: "n./v.", meaning: "保證、保固", category: "合約協商", example: "The laptop comes with a two-year manufacturer guarantee." },
+            { id: 104, word: "impasse", pos: "n.", meaning: "僵局", category: "合約協商", example: "Negotiations reached an impasse over pricing terms." },
+            { id: 105, word: "legal", pos: "adj.", meaning: "法律的、合法的", category: "合約協商", example: "Consult our legal advisors before signing any agreement." },
+            { id: 106, word: "obligation", pos: "n.", meaning: "義務、責任", category: "合約協商", example: "Buyers have no financial obligation until delivery is confirmed." },
+            { id: 107, word: "provision", pos: "n.", meaning: "規定、條款、供應", category: "合約協商", example: "There is a special provision for early termination." },
+            { id: 108, word: "ratify", pos: "v.", meaning: "正式批准、認可", category: "合約協商", example: "The board of directors must ratify the treaty." },
+            { id: 109, word: "stipulate", pos: "v.", meaning: "規定、約定", category: "合約協商", example: "The contract stipulates that delivery must occur within 30 days." },
+            { id: 110, word: "terminate", pos: "v.", meaning: "終止、結束", category: "合約協商", example: "Either party may terminate the contract with 30 days notice." },
+
+            // 客戶服務 (Customer Service)
+            { id: 111, word: "assistance", pos: "n.", meaning: "協助、援助", category: "客戶服務", example: "For technical assistance, please call our toll-free hotline." },
+            { id: 112, word: "catalog", pos: "n.", meaning: "目錄、型錄", category: "客戶服務", example: "Browse our online catalog to view the latest products." },
+            { id: 113, word: "complaint", pos: "n.", meaning: "抱怨、申訴", category: "客戶服務", example: "Customer service representatives handle inquiries and complaints." },
+            { id: 114, word: "courteous", pos: "adj.", meaning: "有禮貌的、謙恭的", category: "客戶服務", example: "Our staff is trained to provide courteous and prompt service." },
+            { id: 115, word: "defective", pos: "adj.", meaning: "有缺陷的、有瑕疵的", category: "客戶服務", example: "You can return defective items for a full refund." },
+            { id: 116, word: "feedback", pos: "n.", meaning: "回饋意見、反應", category: "客戶服務", example: "We value customer feedback to improve our services." },
+            { id: 117, word: "guarantee", pos: "n./v.", meaning: "保證、保固", category: "客戶服務", example: "Satisfaction is guaranteed or your money back." },
+            { id: 118, word: "inquiry", pos: "n.", meaning: "詢問、查詢", category: "客戶服務", example: "We respond to all customer inquiries within 24 hours." },
+            { id: 119, word: "loyalty", pos: "n.", meaning: "忠誠度", category: "客戶服務", example: "Our customer loyalty program offers special discounts." },
+            { id: 120, word: "prompt", pos: "adj./v.", meaning: "迅速的、即時的", category: "客戶服務", example: "Thank you for your prompt reply to my email." },
+            { id: 121, word: "query", pos: "n./v.", meaning: "疑問、詢問", category: "客戶服務", example: "Please direct any billing queries to our support desk." },
+            { id: 122, word: "refund", pos: "n./v.", meaning: "退款", category: "客戶服務", example: "Customers are entitled to a full refund within 14 days." },
+            { id: 123, word: "replacement", pos: "n.", meaning: "替換、更換、替換品", category: "客戶服務", example: "We shipped a free replacement for the broken item." },
+            { id: 124, word: "satisfaction", pos: "n.", meaning: "滿意度", category: "客戶服務", example: "Client satisfaction is our top priority." },
+            { id: 125, word: "warranty", pos: "n.", meaning: "保固、保證書", category: "客戶服務", example: "The warranty covers parts and labor for one year." },
+
+            // 生產製造與物流 (Manufacturing & Logistics)
+            { id: 126, word: "assembly", pos: "n.", meaning: "組裝、集會", category: "生產製造", example: "Workers on the assembly line put the devices together." },
+            { id: 127, word: "cargo", pos: "n.", meaning: "貨物 (船運或空運)", category: "生產製造", example: "The cargo ship arrived at the port this morning." },
+            { id: 128, word: "carrier", pos: "n.", meaning: "運輸公司、載體", category: "生產製造", example: "FedEx is our primary shipping carrier." },
+            { id: 129, word: "consign", pos: "v.", meaning: "託運、交付", category: "生產製造", example: "The goods were consigned to local distributors." },
+            { id: 130, word: "dispatch", pos: "v./n.", meaning: "派遣、發送", category: "生產製造", example: "We will dispatch the order tomorrow afternoon." },
+            { id: 131, word: "distribute", pos: "v.", meaning: "分發、配送、經銷", category: "生產製造", example: "Wholesalers distribute products to retail stores." },
+            { id: 132, word: "facility", pos: "n.", meaning: "設施、設備、場所", category: "生產製造", example: "The new manufacturing facility spans over 50,000 square meters." },
+            { id: 133, word: "freight", pos: "n.", meaning: "貨運、運費", category: "生產製造", example: "Air freight is faster but more expensive than ocean shipping." },
+            { id: 134, word: "inventory", pos: "n.", meaning: "庫存、存貨", category: "生產製造", example: "Staff will conduct a physical inventory check on Friday." },
+            { id: 135, word: "logistics", pos: "n.", meaning: "物流、後勤", category: "生產製造", example: "Efficient logistics ensure timely delivery worldwide." },
+            { id: 136, word: "machinery", pos: "n.", meaning: "機械 (總稱)", category: "生產製造", example: "Heavy machinery is used in the manufacturing plant." },
+            { id: 137, word: "package", pos: "n./v.", meaning: "包裹、包裝", category: "生產製造", example: "Your package has been dispatched from the warehouse." },
+            { id: 138, word: "port", pos: "n.", meaning: "港口", category: "生產製造", example: "The container ship docked at the port of Kaohsiung." },
+            { id: 139, word: "produce", pos: "v./n.", meaning: "生產、製造；農產品", category: "生產製造", example: "The factory can produce 5,000 units per day." },
+            { id: 140, word: "warehouse", pos: "n.", meaning: "倉庫", category: "生產製造", example: "Goods are stored in the central warehouse before shipping." },
+
+            // 行銷業務 (Marketing & Sales)
+            { id: 141, word: "advertisement", pos: "n.", meaning: "廣告", category: "行銷業務", example: "We placed an advertisement in the local newspaper." },
+            { id: 142, word: "brand", pos: "n./v.", meaning: "品牌", category: "行銷業務", example: "Building a strong brand image takes time and effort." },
+            { id: 143, word: "commercial", pos: "adj./n.", meaning: "商業的；電視/廣播廣告", category: "行銷業務", example: "The television commercial reached millions of viewers." },
+            { id: 144, word: "consumer", pos: "n.", meaning: "消費者", category: "行銷業務", example: "Modern consumers prefer eco-friendly products." },
+            { id: 145, word: "discount", pos: "n./v.", meaning: "折扣", category: "行銷業務", example: "Members receive a 10% discount on all purchases." },
+            { id: 146, word: "endorse", pos: "v.", meaning: "代言、背書、贊同", category: "行銷業務", example: "A famous singer was hired to endorse the new sports drink." },
+            { id: 147, word: "launch", pos: "v./n.", meaning: "推出、發布 (新產品)", category: "行銷業務", example: "The tech giant will launch its new smartphone next month." },
+            { id: 148, word: "market", pos: "n./v.", meaning: "市場；推銷", category: "行銷業務", example: "Our goal is to expand into overseas markets." },
+            { id: 149, word: "promote", pos: "v.", meaning: "促銷、推廣、晉升", category: "行銷業務", example: "Social media is an effective way to promote products." },
+            { id: 150, word: "retail", pos: "n./adj.", meaning: "零售", category: "行銷業務", example: "Retail sales increased during the holiday season." },
+            { id: 151, word: "sample", pos: "n./v.", meaning: "樣品、試用品", category: "行銷業務", example: "Customers can try free product samples at the entrance." },
+            { id: 152, word: "trend", pos: "n.", meaning: "趨勢、潮流", category: "行銷業務", example: "We must adapt to changing consumer trends." },
+            { id: 153, word: "wholesale", pos: "n./adj.", meaning: "批發", category: "行銷業務", example: "The company sells goods both at retail and wholesale." },
+            { id: 154, word: "promotional", pos: "adj.", meaning: "促銷的、宣傳的", category: "行銷業務", example: "Free promotional items were given away at the event." },
+            { id: 155, word: "demographic", pos: "n./adj.", meaning: "人口統計數據、客群", category: "行銷業務", example: "Our target demographic is young professionals aged 20-35." },
+
+            // 常用多益核心動詞與形容詞 (General TOEIC)
+            { id: 156, word: "abandon", pos: "v.", meaning: "拋棄、放棄", category: "辦公室商務", example: "They had to abandon the plan due to budget cuts." },
+            { id: 157, word: "abundant", pos: "adj.", meaning: "豐富的、充裕的", category: "辦公室商務", example: "The region has abundant natural resources." },
+            { id: 158, word: "accelerate", pos: "v.", meaning: "加速、促進", category: "辦公室商務", example: "New technologies accelerate business growth." },
+            { id: 159, word: "accessible", pos: "adj.", meaning: "易接近的、可使用的", category: "辦公室商務", example: "The building is fully accessible for disabled visitors." },
+            { id: 160, word: "accommodate", pos: "v.", meaning: "容納、提供住宿、迎合", category: "辦公室商務", example: "The conference hall can accommodate up to 500 guests." },
+            { id: 161, word: "accompany", pos: "v.", meaning: "陪同、伴隨", category: "辦公室商務", example: "Please accompany visitors to the meeting room." },
+            { id: 162, word: "accomplish", pos: "v.", meaning: "完成、實現", category: "辦公室商務", example: "We accomplished all our targets for this quarter." },
+            { id: 163, word: "accurate", pos: "adj.", meaning: "準確的、精確的", category: "辦公室商務", example: "Please ensure all financial reports are accurate." },
+            { id: 164, word: "accustom", pos: "v.", meaning: "使習慣於", category: "辦公室商務", example: "New employees soon accustom themselves to the workflow." },
+            { id: 165, word: "acknowledge", pos: "v.", meaning: "承認、致謝、回覆收到", category: "辦公室商務", example: "Please acknowledge receipt of this email." },
+            { id: 166, word: "adequate", pos: "adj.", meaning: "足夠的、適當的", category: "辦公室商務", example: "There is adequate parking space for all attendees." },
+            { id: 167, word: "adjacent", pos: "adj.", meaning: "鄰近的、毗鄰的", category: "辦公室商務", example: "The hotel is adjacent to the convention center." },
+            { id: 168, word: "adjust", pos: "v.", meaning: "調整、適應", category: "辦公室商務", example: "You can adjust the screen brightness easily." },
+            { id: 169, word: "administer", pos: "v.", meaning: "管理、執行", category: "辦公室商務", example: "HR will administer employee health insurance benefits." },
+            { id: 170, word: "advantage", pos: "n.", meaning: "優勢、有利條件", category: "辦公室商務", example: "Experience gives her an advantage in the interview." },
+            { id: 171, word: "advocate", pos: "v./n.", meaning: "提倡、擁護；擁護者", category: "辦公室商務", example: "We advocate sustainable business practices." },
+            { id: 172, word: "afford", pos: "v.", meaning: "負擔得起", category: "辦公室商務", example: "Small businesses can now afford cloud computing solutions." },
+            { id: 173, word: "agency", pos: "n.", meaning: "代辦處、經銷處、局", category: "辦公室商務", example: "She works for a top advertising agency in Tokyo." },
+            { id: 174, word: "allocate", pos: "v.", meaning: "分配", category: "辦公室商務", example: "Funds were allocated for research and development." },
+            { id: 175, word: "alternative", pos: "n./adj.", meaning: "替代方案；替代的", category: "辦公室商務", example: "We need to find an alternative supplier." },
+            { id: 176, word: "ambitious", pos: "adj.", meaning: "有雄心壯志的、有野心的", category: "辦公室商務", example: "The company has ambitious expansion plans for Asia." },
+            { id: 177, word: "amend", pos: "v.", meaning: "修正、修改（法案、合約）", category: "辦公室商務", example: "The committee voted to amend the proposal." },
+            { id: 178, word: "ample", pos: "adj.", meaning: "充足的、豐富的", category: "辦公室商務", example: "We have ample time to review the contract." },
+            { id: 179, word: "announce", pos: "v.", meaning: "宣布、宣告", category: "辦公室商務", example: "Management will announce the merger tomorrow." },
+            { id: 180, word: "annual", pos: "adj.", meaning: "年度的、每年的", category: "辦公室商務", example: "Our annual report will be published next month." },
+            { id: 181, word: "anticipate", pos: "v.", meaning: "預期、期望", category: "辦公室商務", example: "We anticipate a surge in demand during holidays." },
+            { id: 182, word: "apparent", pos: "adj.", meaning: "明顯的、顯而易見的", category: "辦公室商務", example: "It soon became apparent that more staff were needed." },
+            { id: 183, word: "apply", pos: "v.", meaning: "申請、應用", category: "辦公室商務", example: "You can apply for the position online." },
+            { id: 184, word: "appoint", pos: "v.", meaning: "任命、指派", category: "辦公室商務", example: "She was appointed chief financial officer." },
+            { id: 185, word: "appreciate", pos: "v.", meaning: "感激、欣賞、增值", category: "辦公室商務", example: "We deeply appreciate your continued support." },
+            { id: 186, word: "approach", pos: "v./n.", meaning: "接近、方法、途徑", category: "辦公室商務", example: "We need a fresh approach to problem solving." },
+            { id: 187, word: "appropriate", pos: "adj.", meaning: "適當的、恰當的", category: "辦公室商務", example: "Casual wear is not appropriate for formal meetings." },
+            { id: 188, word: "approve", pos: "v.", meaning: "批准、贊成", category: "辦公室商務", example: "The board approved the construction budget." },
+            { id: 189, word: "approximate", pos: "adj./v.", meaning: "大約的、估計的", category: "辦公室商務", example: "The approximate cost of repairs is $500." },
+            { id: 190, word: "architect", pos: "n.", meaning: "建築師", category: "辦公室商務", example: "The architect designed the new corporate headquarters." },
+            { id: 191, word: "arise", pos: "v.", meaning: "出現、發生", category: "辦公室商務", example: "Please let me know if any problems arise." },
+            { id: 192, word: "arrange", pos: "v.", meaning: "安排、籌備", category: "辦公室商務", example: "I will arrange a meeting for tomorrow afternoon." },
+            { id: 193, word: "arrest", pos: "v./n.", meaning: "逮捕", category: "辦公室商務", example: "Police arrested the suspect at the airport." },
+            { id: 194, word: "arrival", pos: "n.", meaning: "到達、抵達", category: "辦公室商務", example: "Please notify us of your expected arrival time." },
+            { id: 195, word: "article", pos: "n.", meaning: "文章、物品、條款", category: "辦公室商務", example: "She wrote an inspiring article for the business magazine." },
+            { id: 196, word: "artificial", pos: "adj.", meaning: "人工的、人造的", category: "辦公室商務", example: "The office plants are made of artificial materials." },
+            { id: 197, word: "ascend", pos: "v.", meaning: "上升、登高", category: "辦公室商務", example: "The elevator began to ascend to the top floor." },
+            { id: 198, word: "aspect", pos: "n.", meaning: "方面、觀點", category: "辦公室商務", example: "We analyzed every aspect of the project." },
+            { id: 199, word: "assemble", pos: "v.", meaning: "組合、集合", category: "辦公室商務", example: "All employees must assemble in the lobby for the drill." },
+            { id: 200, word: "assess", pos: "v.", meaning: "評估、評價", category: "辦公室商務", example: "Engineers were sent to assess the damage to the building." }
+        ];
+
+        // ==========================================
+        // 2. 全域狀態與資料持久化 (LocalStorage)
+        // ==========================================
+        let vocabList = JSON.parse(localStorage.getItem('toeic_vocab')) || rawVocabData;
+        let mistakesList = JSON.parse(localStorage.getItem('toeic_mistakes')) || [];
+        let userStats = JSON.parse(localStorage.getItem('toeic_stats')) || {
+            quizCount: 0,
+            correctCount: 0,
+            totalAnswered: 0
+        };
+
+        // 測驗暫存變數
+        let currentListeningItem = null;
+        let currentSpeakingItem = null;
+        let recognition = null;
+        let isRecognizing = false;
+
+        // 初始化
+        window.onload = function() {
+            renderDictionary(vocabList);
+            updateStatsDisplay();
+            updateMistakeBadge();
+            initSpeechRecognition();
+            initListeningQuiz();
+            initSpeakingQuiz();
+        };
+
+        // 頁籤切換
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-indigo-600', 'shadow');
+                btn.classList.add('text-indigo-100', 'hover:bg-indigo-600');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            const activeBtn = document.getElementById(`btn-${tabName}`);
+            activeBtn.classList.remove('text-indigo-100', 'hover:bg-indigo-600');
+            activeBtn.classList.add('bg-white', 'text-indigo-600', 'shadow');
+
+            if (tabName === 'listening') {
+                initListeningQuiz();
+            } else if (tabName === 'speaking') {
+                initSpeakingQuiz();
+            } else if (tabName === 'mistakes') {
+                renderMistakes();
+            } else if (tabName === 'stats') {
+                updateStatsDisplay();
+            }
+        }
+
+        // ==========================================
+        // 3. 字典與單字卡片功能
+        // ==========================================
+        function renderDictionary(data) {
+            const grid = document.getElementById('vocab-grid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">找不到符合條件的單字</div>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition hover:shadow-md`;
+                
+                const isFavorite = item.favorite ? 'text-rose-500 fa-solid' : 'text-slate-300 fa-regular';
+                const statusBadge = item.mastered 
+                    ? `<span class="bg-emerald-50 text-emerald-600 text-xs px-2.5 py-1 rounded-lg font-medium">已掌握</span>`
+                    : `<span class="bg-amber-50 text-amber-600 text-xs px-2.5 py-1 rounded-lg font-medium">學習中</span>`;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded font-medium">${item.category}</span>
+                                <div class="flex items-baseline space-x-2 mt-1">
+                                    <h3 class="text-lg font-bold text-slate-800">${item.word}</h3>
+                                    <span class="text-xs text-slate-400 font-medium">${item.pos}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="toggleFavorite(${item.id})" class="text-lg transition hover:scale-110">
+                                    <i class="${isFavorite} fa-heart"></i>
+                                </button>
+                                <button onclick="speakText('${item.word}')" class="w-8 h-8 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm transition">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-slate-700 font-semibold text-sm mb-2">${item.meaning}</p>
+                        <p class="text-xs text-slate-500 italic bg-slate-50 p-2.5 rounded-xl border border-slate-100">"${item.example}"</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                        ${statusBadge}
+                        <button onclick="toggleMastered(${item.id})" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                            ${item.mastered ? '標記為學習中' : '標記為掌握 <i class="fa-solid fa-check ml-0.5"></i>'}
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterDictionary() {
+            const keyword = document.getElementById('search-input').value.toLowerCase();
+            const category = document.getElementById('category-filter').value;
+            const status = document.getElementById('status-filter').value;
+
+            const filtered = vocabList.filter(item => {
+                const matchKeyword = item.word.toLowerCase().includes(keyword) || item.meaning.includes(keyword);
+                const matchCategory = category === 'all' || item.category === category;
+                
+                let matchStatus = true;
+                if (status === 'favorite') matchStatus = !!item.favorite;
+                if (status === 'mastered') matchStatus = !!item.mastered;
+                if (status === 'learning') matchStatus = !item.mastered;
+
+                return matchKeyword && matchCategory && matchStatus;
+            });
+
+            renderDictionary(filtered);
+        }
+
+        function toggleFavorite(id) {
+            const target = vocabList.find(i => i.id === id);
+            if (target) {
+                target.favorite = !target.favorite;
+                saveData();
+                filterDictionary();
+            }
+        }
+
+        function toggleMastered(id) {
+            const target = vocabList.find(i => i.id === id);
+            if (target) {
+                target.mastered = !target.mastered;
+                saveData();
+                filterDictionary();
+                updateStatsDisplay();
+            }
+        }
+
+        // ==========================================
+        // 4. Web Speech API (語音合成 Text-to-Speech)
+        // ==========================================
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) {
+                alert('您的瀏覽器不支援語音合成功能');
+                return;
+            }
+            window.speechSynthesis.cancel(); // 停止先前的發音
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9; // 稍微放慢適合學習
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ==========================================
+        // 5. 聽力測驗模式 (Listening Mode)
+        // ==========================================
+        let listeningQuestionCount = 1;
+        const maxQuestions = 10;
+
+        function initListeningQuiz() {
+            listeningQuestionCount = 1;
+            document.getElementById('l-total-q').innerText = maxQuestions;
+            loadNewListeningQuestion();
+        }
+
+        function loadNewListeningQuestion() {
+            document.getElementById('l-current-q').innerText = listeningQuestionCount;
+            document.getElementById('l-feedback-container').classList.add('hidden');
+            
+            // 隨機抽選一題
+            currentListeningItem = vocabList[Math.floor(Math.random() * vocabList.length)];
+            
+            // 自動播放一次發音
+            setTimeout(() => speakText(currentListeningItem.word), 300);
+
+            // 產生 3 個錯誤選項 + 1 個正確選項
+            let options = [currentListeningItem];
+            while (options.length < 4) {
+                const randomItem = vocabList[Math.floor(Math.random() * vocabList.length)];
+                if (!options.some(o => o.id === randomItem.id)) {
+                    options.push(randomItem);
+                }
+            }
+            // 隨機排序選項
+            options.sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('l-options-container');
+            container.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = `p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-left transition font-medium text-slate-700 flex flex-col`;
+                btn.innerHTML = `
+                    <span class="text-sm font-bold text-slate-800">${opt.meaning}</span>
+                    <span class="text-xs text-slate-400 mt-0.5">詞性：${opt.pos}</span>
+                `;
+                btn.onclick = () => checkListeningAnswer(opt.id, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function playCurrentListeningAudio() {
+            if (currentListeningItem) {
+                speakText(currentListeningItem.word);
+            }
+        }
+
+        function checkListeningAnswer(selectedId, btnElement) {
+            userStats.totalAnswered++;
+            userStats.quizCount++;
+
+            const isCorrect = (selectedId === currentListeningItem.id);
+            const allBtns = document.getElementById('l-options-container').children;
+
+            Array.from(allBtns).forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                userStats.correctCount++;
+                btnElement.classList.remove('bg-slate-50', 'border-slate-200');
+                btnElement.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-800');
+                showListeningFeedback(true, "答對了！發音與含義完全正確。");
+            } else {
+                btnElement.classList.remove('bg-slate-50', 'border-slate-200');
+                btnElement.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-800');
+                
+                // 標記錯題
+                addMistake(currentListeningItem);
+                showListeningFeedback(false, `答錯了！正確答案是：${currentListeningItem.word} (${currentListeningItem.meaning})`);
+            }
+            saveData();
+        }
+
+        function showListeningFeedback(isCorrect, msg) {
+            const container = document.getElementById('l-feedback-container');
+            const textEl = document.getElementById('l-feedback-text');
+            const exEl = document.getElementById('l-feedback-example');
+
+            container.classList.remove('hidden');
+            if (isCorrect) {
+                textEl.className = "font-bold text-base mb-1 text-emerald-600";
+                textEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> ${msg}`;
+            } else {
+                textEl.className = "font-bold text-base mb-1 text-rose-600";
+                textEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> ${msg}`;
+            }
+            exEl.innerText = `例句：${currentListeningItem.example}`;
+        }
+
+        function nextListeningQuestion() {
+            if (listeningQuestionCount >= maxQuestions) {
+                alert(`恭喜完成本輪聽力測驗！總答題數：${maxQuestions}`);
+                switchTab('dictionary');
+                return;
+            }
+            listeningQuestionCount++;
+            loadNewListeningQuestion();
+        }
+
+        // ==========================================
+        // 6. 口說辨識測驗模式 (Speaking & Reading Mode)
+        // ==========================================
+        let speakingQuestionCount = 1;
+
+        function initSpeakingQuiz() {
+            speakingQuestionCount = 1;
+            document.getElementById('s-total-q').innerText = maxQuestions;
+            loadNewSpeakingQuestion();
+        }
+
+        function loadNewSpeakingQuestion() {
+            document.getElementById('s-current-q').innerText = speakingQuestionCount;
+            document.getElementById('s-result-box').classList.add('hidden');
+            document.getElementById('mic-btn').disabled = false;
+            document.getElementById('speech-status-text').innerText = "點擊麥克風開始說出英文單字";
+            document.getElementById('mic-btn').className = "w-20 h-20 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-rose-200 transition";
+
+            currentSpeakingItem = vocabList[Math.floor(Math.random() * vocabList.length)];
+            
+            document.getElementById('s-category-tag').innerText = currentSpeakingItem.category;
+            document.getElementById('s-chinese-prompt').innerText = `${currentSpeakingItem.meaning} (${currentSpeakingItem.pos})`;
+            
+            // 首字母提示
+            const firstLetter = currentSpeakingItem.word.charAt(0).toUpperCase();
+            const restLength = currentSpeakingItem.word.length - 1;
+            document.getElementById('s-hint-letter').innerText = `${firstLetter} ${'_ '.repeat(restLength)}`;
+        }
+
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn("此瀏覽器不支援 Web Speech Recognition API");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                isRecognizing = true;
+                document.getElementById('listening-wave').classList.remove('hidden');
+                document.getElementById('speech-status-text').innerText = "正在聆聽您的發音，請清晰唸出英文單字...";
+                document.getElementById('mic-btn').className = "w-20 h-20 bg-amber-500 animate-pulse text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-amber-200 transition";
+            };
+
+            recognition.onresult = function(event) {
+                const speechResult = event.results[0][0].transcript.trim().toLowerCase();
+                evaluateSpeakingResult(speechResult);
+            };
+
+            recognition.onerror = function(event) {
+                console.error("語音辨識發生錯誤:", event.error);
+                document.getElementById('speech-status-text').innerText = "辨識發生錯誤或未偵測到聲音，請再試一次。";
+                stopRecognitionUI();
+            };
+
+            recognition.onend = function() {
+                isRecognizing = false;
+                document.getElementById('listening-wave').classList.add('hidden');
+            };
+        }
+
+        function toggleSpeechRecognition() {
+            if (!recognition) {
+                // 若無原生 SpeechRecognition 支援，提供友善的互動模擬輸入或提示
+                const userGuess = prompt(`您的瀏覽器可能未完整支援語音辨識授權，請手動輸入您剛才唸的英文單字：\n(提示單字為：${currentSpeakingItem.word})`);
+                if (userGuess) {
+                    evaluateSpeakingResult(userGuess.trim().toLowerCase());
+                }
+                return;
+            }
+
+            if (isRecognizing) {
+                recognition.stop();
+                stopRecognitionUI();
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        function stopRecognitionUI() {
+            isRecognizing = false;
+            document.getElementById('listening-wave').classList.add('hidden');
+            document.getElementById('mic-btn').className = "w-20 h-20 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-rose-200 transition";
+        }
+
+        function evaluateSpeakingResult(spokenText) {
+            stopRecognitionUI();
+            userStats.totalAnswered++;
+            userStats.quizCount++;
+
+            const targetWord = currentSpeakingItem.word.toLowerCase();
+            // 容錯比對：包含或完全相符
+            const isCorrect = spokenText === targetWord || targetWord.includes(spokenText) || spokenText.includes(targetWord);
+
+            const resultBox = document.getElementById('s-result-box');
+            const recognizedTextEl = document.getElementById('s-recognized-text');
+            const feedbackMsgEl = document.getElementById('s-feedback-msg');
+            const micBtn = document.getElementById('mic-btn');
+
+            micBtn.disabled = true;
+            resultBox.classList.remove('hidden');
+            recognizedTextEl.innerText = `"${spokenText}"`;
+
+            if (isCorrect) {
+                userStats.correctCount++;
+                feedbackMsgEl.className = "text-sm font-bold text-emerald-600";
+                feedbackMsgEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> 發音完全正確！太棒了！`;
+            } else {
+                addMistake(currentSpeakingItem);
+                feedbackMsgEl.className = "text-sm font-bold text-rose-600";
+                feedbackMsgEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> 辨識結果不符。正確單字應為：<strong>${currentSpeakingItem.word}</strong>`;
+            }
+            saveData();
+        }
+
+        function nextSpeakingQuestion() {
+            if (speakingQuestionCount >= maxQuestions) {
+                alert(`恭喜完成本輪口說辨識測驗！總題數：${maxQuestions}`);
+                switchTab('dictionary');
+                return;
+            }
+            speakingQuestionCount++;
+            loadNewSpeakingQuestion();
+        }
+
+        // ==========================================
+        // 7. 錯題本與資料管理
+        // ==========================================
+        function addMistake(item) {
+            if (!mistakesList.some(m => m.id === item.id)) {
+                mistakesList.push(item);
+                saveData();
+                updateMistakeBadge();
+            }
+        }
+
+        function renderMistakes() {
+            const grid = document.getElementById('mistakes-grid');
+            grid.innerHTML = '';
+
+            if (mistakesList.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">目前沒有錯題記錄，表現優異！</div>`;
+                return;
+            }
+
+            mistakesList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="bg-rose-50 text-rose-700 text-xs px-2 py-0.5 rounded font-medium">${item.category}</span>
+                                <div class="flex items-baseline space-x-2 mt-1">
+                                    <h3 class="text-lg font-bold text-slate-800">${item.word}</h3>
+                                    <span class="text-xs text-slate-400 font-medium">${item.pos}</span>
+                                </div>
+                            </div>
+                            <button onclick="speakText('${item.word}')" class="w-8 h-8 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm transition">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                        <p class="text-slate-700 font-semibold text-sm mb-2">${item.meaning}</p>
+                        <p class="text-xs text-slate-500 italic bg-slate-50 p-2.5 rounded-xl border border-slate-100">"${item.example}"</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function clearMistakes() {
+            mistakesList = [];
+            saveData();
+            renderMistakes();
+            updateMistakeBadge();
+        }
+
+        function updateMistakeBadge() {
+            document.getElementById('mistake-badge').innerText = mistakesList.length;
+        }
+
+        function updateStatsDisplay() {
+            const totalWords = vocabList.length;
+            const masteredCount = vocabList.filter(i => i.mastered).length;
+            const accuracy = userStats.totalAnswered > 0 
+                ? Math.round((userStats.correctCount / userStats.totalAnswered) * 100) 
+                : 0;
+
+            document.getElementById('stat-total-words').innerText = totalWords;
+            document.getElementById('stat-mastered').innerText = masteredCount;
+            document.getElementById('stat-quiz-count').innerText = userStats.quizCount;
+            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+        }
+
+        function saveData() {
+            localStorage.setItem('toeic_vocab', JSON.stringify(vocabList));
+            localStorage.setItem('toeic_mistakes', JSON.stringify(mistakesList));
+            localStorage.setItem('toeic_stats', JSON.stringify(userStats));
+        }
+
+        function resetAllData() {
+            if (confirm("確定要重設所有學習進度與收藏嗎？此動作無法復原。")) {
+                localStorage.clear();
+                vocabList = JSON.parse(JSON.stringify(rawVocabData));
+                mistakesList = [];
+                userStats = { quizCount: 0, correctCount: 0, totalAnswered: 0 };
+                renderDictionary(vocabList);
+                updateStatsDisplay();
+                updateMistakeBadge();
+                alert("已成功重設所有資料。");
+            }
+        }
+    </script>
+</body>
+</html>
